@@ -1,4 +1,5 @@
 <h1 align="center">Awesome Attention 🧠🔥</h1>
+
 A curated and well-documented PyTorch implementation of modern **attention mechanisms**, designed for learning, research, and real-world applications.
 
 > ⭐ Focused, Minimal, and Extensible — perfect for understanding the core logic behind various attention variants.
