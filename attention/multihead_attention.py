@@ -3,11 +3,10 @@ import torch
 from torch import nn, Tensor
 
 
-class Attention(nn.Module):
+class MultiHeadAttention(nn.Module):
     def __init__(self,
         d_model,
         n_heads,
-        max_seq_len,
         bias=True,
         device=None,
         dtype=None
