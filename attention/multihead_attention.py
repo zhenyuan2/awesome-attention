@@ -31,6 +31,10 @@ class MultiHeadAttention(nn.Module):
 
         score = q @ k.transpose(-2, -1) / math.sqrt(self.head_dim)
         if mask is not None:
+            if mask.ndim == 2:
+                mask = mask[:, None, None, :]
+            elif mask.ndim == 3:
+                mask = mask[:, None, :]
             score = score + mask
         attns = torch.softmax(score, dim=-1)
 
@@ -38,4 +42,4 @@ class MultiHeadAttention(nn.Module):
 
         attn_output = attn_output.transpose(1, 2).contiguous().view(batch_size, seq_len, dim)
 
-        return self.Wo(attn_output)
+        return self.Wo(attn_output), attns
