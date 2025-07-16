@@ -10,10 +10,10 @@ This repository provides clean and efficient implementations of popular **attent
 
 ### ✅ Implemented Modules
 
-| Module Name                | Description                                                      |
-|---------------------------|------------------------------------------------------------------|
-| `MultiHeadAttention`      | Standard scaled dot-product multi-head attention (Vaswani et al.) |
-| `MultiQueryAttention`     | Uses one query head and multiple key-value heads (Shazeer et al.) |
+| Module Name                | Description                                     |
+|---------------------------|--------------------------------------------------|
+| `MultiHeadAttention`      | Standard scaled dot-product multi-head attention |
+| `MultiQueryAttention`     | Uses one query head and multiple key-value heads |
 | `GroupedQueryAttention`   | A hybrid form where groups of query heads share key-value heads   |
 | *(More coming soon!)*     | Long-range attention, sparse attention, flash attention, etc.     |
 
