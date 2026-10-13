@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "awesome-attention"
+version = "0.1.0"
+description = "Readable PyTorch implementations of MHA, MQA, GQA, and MLA"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+dependencies = ["torch>=2.0"]
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[tool.setuptools.packages.find]
+include = ["attention*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
