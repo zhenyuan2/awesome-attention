@@ -1,45 +1,51 @@
 import math
+
 import torch
-from torch import nn, Tensor
+from torch import Tensor, nn
 
 
 class MultiHeadAttention(nn.Module):
-    def __init__(self,
-        d_model,
-        n_heads,
-        bias=True,
-        device=None,
-        dtype=None
-    ):
+    """Each query head has its own key/value head."""
+
+    def __init__(self, d_model, n_heads, bias=True, device=None, dtype=None):
         super().__init__()
-        factory_kwargs = {"device": device, "dtype": dtype}
-        assert d_model % n_heads == 0
+        assert n_heads > 0 and d_model > 0 and d_model % n_heads == 0
         self.n_heads = n_heads
         self.head_dim = d_model // n_heads
 
+        factory_kwargs = {"device": device, "dtype": dtype}
         self.Wq = nn.Linear(d_model, d_model, bias=bias, **factory_kwargs)
         self.Wk = nn.Linear(d_model, d_model, bias=bias, **factory_kwargs)
         self.Wv = nn.Linear(d_model, d_model, bias=bias, **factory_kwargs)
-
         self.Wo = nn.Linear(d_model, d_model, bias=bias, **factory_kwargs)
 
-    def forward(self, x: Tensor, mask=None):
-        batch_size, seq_len, dim = x.shape
-        q = self.Wq(x).view(batch_size, seq_len, -1, self.head_dim).transpose(1, 2)
-        k = self.Wk(x).view(batch_size, seq_len, -1, self.head_dim).transpose(1, 2)
-        v = self.Wv(x).view(batch_size, seq_len, -1, self.head_dim).transpose(1, 2)
+    def forward(self, x: Tensor, mask=None, *, return_attention=False):
+        batch_size, seq_len, d_model = x.shape
+        # Split the projected features into heads: [B,N,H,D] -> [B,H,N,D].
+        q = self.Wq(x).view(batch_size, seq_len, self.n_heads, self.head_dim).transpose(1, 2)
+        k = self.Wk(x).view(batch_size, seq_len, self.n_heads, self.head_dim).transpose(1, 2)
+        v = self.Wv(x).view(batch_size, seq_len, self.n_heads, self.head_dim).transpose(1, 2)
 
-        score = q @ k.transpose(-2, -1) / math.sqrt(self.head_dim)
+        scores = q @ k.transpose(-2, -1)
+        scores = scores / math.sqrt(self.head_dim)
         if mask is not None:
+            # [N,N] -> [1,1,N,N]; [B,N] -> [B,1,1,N].
             if mask.ndim == 2:
-                mask = mask[:, None, None, :]
+                if mask.shape == (seq_len, seq_len):
+                    mask = mask[None, None, :, :]
+                else:
+                    mask = mask[:, None, None, :]
             elif mask.ndim == 3:
-                mask = mask[:, None, :]
-            score = score + mask
-        attns = torch.softmax(score, dim=-1)
+                mask = mask[:, None, :, :]
+            if mask.dtype == torch.bool:
+                scores = scores.masked_fill(~mask, float("-inf"))
+            else:
+                scores = scores + mask
 
-        attn_output = attns @ v
+        attns = torch.softmax(scores, dim=-1)
 
-        attn_output = attn_output.transpose(1, 2).contiguous().view(batch_size, seq_len, dim)
-
-        return self.Wo(attn_output), attns
+        output = attns @ v  # [B,H,N,D]
+        # Move tokens before heads, then concatenate the heads.
+        output = output.transpose(1, 2).contiguous().view(batch_size, seq_len, d_model)
+        output = self.Wo(output)
+        return (output, attns) if return_attention else output
