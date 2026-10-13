@@ -65,8 +65,8 @@ out = mla(x, causal_mask)  # x and causal_mask from the example above
 `Wdq` compresses Q; `Wuq` and `Wqr` produce its content and positional branches.
 `Wdkv` jointly compresses K/V; `Wuk` and `Wuv` restore per-head content K/V.
 `Wkr` produces one positional key directly from the input, shared across heads.
-RoPE acts only on the positional branches. Attention scores sum the content and
-positional dot products, scaled by `sqrt(head_dim + rope_dim)`.
+RoPE acts only on the positional branches. Content and positional features are
+concatenated to form Q/K, whose dot products are scaled by `sqrt(head_dim + rope_dim)`.
 
 Unlike the other modules, MLA specifies `head_dim` explicitly; `n_heads * head_dim`
 does not need to equal `d_model`. This teaching version expands K/V for full-sequence

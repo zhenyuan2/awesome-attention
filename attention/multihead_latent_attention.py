@@ -60,10 +60,12 @@ class MultiHeadLatentAttention(nn.Module):
         q_rope = apply_rope(q_rope, cos, sin)
         k_rope = apply_rope(k_rope, cos, sin)
 
-        # Equivalent to dotting concatenated [q_content; q_rope] and
-        # [k_content; k_rope], without explicitly concatenating them.
-        scores = q_content @ k_content.transpose(-2, -1)
-        scores = scores + q_rope @ k_rope.transpose(-2, -1)
+        # Concatenate content and positional features: [B,H,N,head_dim+rope_dim].
+        q = torch.cat([q_content, q_rope], dim=-1)
+        # cat does not broadcast, so expand the shared positional key first.
+        k_rope = k_rope.expand(-1, self.n_heads, -1, -1)
+        k = torch.cat([k_content, k_rope], dim=-1)
+        scores = q @ k.transpose(-2, -1)
         scores = scores / math.sqrt(self.head_dim + self.rope_dim)
 
         if mask is not None:
